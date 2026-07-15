@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Proxmox Cluster Dashboard</title>
+<style>
+  body { font-family: system-ui, sans-serif; background: #0f1115; color: #e6e6e6; margin: 0; padding: 2rem; }
+  h1 { font-size: 1.4rem; margin-bottom: 1.5rem; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { text-align: left; padding: 0.6rem 0.8rem; border-bottom: 1px solid #2a2d34; }
+  th { color: #9aa0a6; font-weight: 600; font-size: 0.85rem; text-transform: uppercase; }
+  .status-running { color: #4caf50; font-weight: 600; }
+  .status-stopped { color: #f44336; font-weight: 600; }
+  button { padding: 0.3rem 0.8rem; margin-right: 0.4rem; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85rem; }
+  .btn-start { background: #4caf50; color: white; }
+  .btn-stop { background: #f44336; color: white; }
+  .error { color: #f44336; padding: 1rem; background: #2a1414; border-radius: 6px; }
+  #refresh { margin-bottom: 1rem; background: #333; color: #eee; }
+</style>
+</head>
+<body>
+  <h1>🖥️ Proxmox Cluster Dashboard</h1>
+  <button id="refresh">Refresh</button>
+  <div id="content">Loading...</div>
+
+<script>
+async function loadVms() {
+  const content = document.getElementById('content');
+  content.innerHTML = 'Loading...';
+  try {
+    const res = await fetch('/api/vms');
+    const vms = await res.json();
+    if (vms.error) throw new Error(vms.error);
+
+    if (!vms.length) {
+      content.innerHTML = '<p>No VMs found.</p>';
+      return;
+    }
+
+    let html = '<table><tr><th>Name</th><th>Node</th><th>VMID</th><th>Status</th><th>CPU</th><th>Mem</th><th>Actions</th></tr>';
+    for (const vm of vms) {
+      const statusClass = vm.status === 'running' ? 'status-running' : 'status-stopped';
+      html += `<tr>
+        <td>${vm.name || '-'}</td>
+        <td>${vm.node}</td>
+        <td>${vm.vmid}</td>
+        <td class="${statusClass}">${vm.status}</td>
+        <td>${(vm.cpu * 100).toFixed(1)}%</td>
+        <td>${(vm.mem / 1024 / 1024).toFixed(0)} MB</td>
+        <td>
+          <button class="btn-start" onclick="action('${vm.node}', ${vm.vmid}, 'start')">Start</button>
+          <button class="btn-stop" onclick="action('${vm.node}', ${vm.vmid}, 'stop')">Stop</button>
+        </td>
+      </tr>`;
+    }
+    html += '</table>';
+    content.innerHTML = html;
+  } catch (err) {
+    content.innerHTML = `<div class="error">Failed to load VMs: ${err.message}</div>`;
+  }
+}
+
+async function action(node, vmid, act) {
+  await fetch(`/api/vms/${node}/${vmid}/${act}`, { method: 'POST' });
+  setTimeout(loadVms, 1500);
+}
+
+document.getElementById('refresh').addEventListener('click', loadVms);
+loadVms();
+</script>
+</body>
+</html>
