@@ -46,7 +46,7 @@ jobs:
           docker push ghcr.io/${{ github.repository }}:latest
 
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@0.32.0
+        uses: aquasecurity/trivy-action@v0.28.0
         with:
           image-ref: ghcr.io/${{ github.repository }}:${{ steps.meta.outputs.TAG }}
           format: table
@@ -72,3 +72,4 @@ jobs:
 
           git commit -m "ci: update image to ${{ steps.meta.outputs.TAG }}"
           git push
+          
