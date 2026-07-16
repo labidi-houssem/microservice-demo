@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: microservice-demo
-          image: ghcr.io/labidi-houssem/microservice-demo:latest
+          image: ghcr.io/labidi-houssem/microservice-demo:3d01917
           ports:
             - containerPort: 3000
           envFrom:
