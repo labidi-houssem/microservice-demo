@@ -10,6 +10,7 @@ on:
 permissions:
   contents: write
   packages: write
+  security-events: write
 
 jobs:
   docker:
@@ -43,6 +44,15 @@ jobs:
         run: |
           docker push ghcr.io/${{ github.repository }}:${{ steps.meta.outputs.TAG }}
           docker push ghcr.io/${{ github.repository }}:latest
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@0.32.0
+        with:
+          image-ref: ghcr.io/${{ github.repository }}:${{ steps.meta.outputs.TAG }}
+          format: table
+          exit-code: 1
+          ignore-unfixed: true
+          severity: HIGH,CRITICAL
 
       - name: Update Kubernetes deployment
         run: |
